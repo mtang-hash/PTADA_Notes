@@ -1,0 +1,570 @@
+\input{settings.tex}
+\title{\scshape Notes from Class \vspace{0.5pc} \\ \large{Probabilistic Techniques and Algorithms in Data Analysis}}
+\author{Min Tang}
+%\date{27. Oktober 2019}
+\begin{document}
+%\maketitle
+%\tableofcontents 
+%\newpage
+\setcounter{section}{1}
+\setcounter{page}{2}
+\section{Randomized Matrix Multiplication}
+\mymarginpar{\tiny{1. Lecture}}
+\paragraph{Motivations:}
+\begin{itemize}
+\item Basis transformation
+\item Greedy algorithm (later)
+\item Application to randomized SVD
+\end{itemize}
+Linear operations are the most basic function model $\rightarrow$ Problem of crucial importance. How do we multiply matrices $A\in \R^{m\times n}, B\in \R^{n\times p}$?
+\begin{equation*}
+\begin{pmatrix}
+a_{11} & a_{12} \\
+a_{21} & a_{22} \\
+\end{pmatrix}
+\begin{pmatrix}
+b_{11} & b_{12} \\
+b_{21} & b_{22} \\
+\end{pmatrix} =
+\begin{pmatrix}
+a_{11} b_{11} + a_{12} b_{21} & ... \\
+... & ... \\
+\end{pmatrix}
+\end{equation*}
+%\vspace{-1pc}
+\begin{algorithm}[H]
+\For {$i=1$ to $m$}{
+	\For {$j=1$ to $p$}{
+		$(AB)_{ij}$ = 0 \\
+		\For {$k=1$ to $n$} {
+			$(AB)_{ij} = (AB)_{ij}+A_{ik}B_{kj}$
+		}
+	}
+}
+\caption{Naive matrix multiplication}
+\end{algorithm}
+$\leadsto$ Computational cost of $O(m\cdot n \cdot p).$ 
+\begin{itemize}
+\item \emph{Can we do that faster?} Yes, Strassen's algorithm (based on tensor representations) and follow-ups give exact product in fewer operations. \\
+For $m=n=p$: best known order is $O(m^{2.37...})$ 
+	\subitem $\rightarrow$ still large for $m$ large
+	\subitem $\rightarrow$ does not compete with standard approach due to implementation aspects.
+\item \emph{Can we make it still faster if we are OK with approximate solutions?}
+	\subitem $\rightarrow$ approximate solution $\leadsto$ small \emph{error}  
+	\subitem $\rightarrow$ randomized algorithm with small probability of failure. 
+\item To do that, we need measure for size of error. $\rightarrow$ Norms on matrix space:
+\begin{align*}
+\|A\|_F = \sqrt{\operatorname{tr}A^*A} = \sqrt{\sum_{i,j} a_{ij}^2}\quad\quad \text{Frobenius norm}\\
+\|A\| = \sup_{x:\|x\|=1} \|Ax\|_2 \quad\quad \text{Spectral norm}
+\end{align*}
+The Frobenius norm will be used as a measure for error.
+\end{itemize}
+\drawaline
+\mymarginpar{\tiny{2. Lecture}}
+\textbf{Observation}:
+\begin{equation*}
+AB=\sum_{i} \underbrace{A^{(i)}}_{i\text{-th column of }A} \cdot \underbrace{B_{(i)}}_{i\text{-th row of }B}
+\end{equation*}
+\textbf{Goal}: Approximate matrix product with fewer operations \\
+\textbf{Idea}: Subsample and renormalize.
+\begin{enumerate}
+	\item \textbf{Subsampling}: sum only \textbf{random samples} of outer products, that is,
+	$$S_1 = \sum_{t=1}^c A^{(i_t)}B_{(i_t)}$$
+	where the $i_t$ are drawn independently at random according to some probability measure $\nu$ on $[n]:= \{1,...,n\}$. 
+	\item \textbf{Renormalization:} Calculate 
+	\begin{equation*}
+	\begin{split}
+		\E S_1 & = c \cdot  \E[A^{(i_1)} B_{(i_1)}]		\\
+				& = c \cdot \sum_{j=1}^n \nu(j) A^{(j)} B_{(j)} 
+	\end{split}
+	\end{equation*}
+		We would like this to be $AB$. So we renormalize and consider
+	\begin{equation} \label{matrix-mult-random}
+		\boxed{S= \sum_{t=1}^c \frac{1}{c\nu(i_t)}A^{(i_t)} B_{(i_t)}} \implies \E S= AB
+	\end{equation}
+\end{enumerate}
+\begin{algorithm}[H]
+\SetAlgoLined
+\SetKwInOut{Input}{Input}\SetKwInOut{Output}{Output}
+% initialization\;
+ \Input{$A\in \R^{m \times n}, B\in \R^{n \times p}, c\in \N, p_1=\nu(1),...,p_n=\nu(n)$}
+ \Output{Approximate product $P\in \R^{m \times p}$}
+ \BlankLine
+\For {$t=1$ to $c$}{
+	Pick $i_t \in [n]$ i.i.d. according to $\nu$ \\
+	Set $c^{(t)} = \frac{A^{(i_t)}}{\sqrt{c p_{i_t}}}$, $R_{(t)} = \frac{B_{(it)}}{\sqrt{cp_{i_t}}}$
+}
+\Return{$P = CR$ \small{(calculated using your favorite deterministic algorithm)}}
+\label{algo2:random-matr-mult}
+\caption{Randomized matrix multiplication}
+\end{algorithm}
+\begin{itemize}
+	\item How should we choose the measure $\nu$?
+		\subitem $\rightarrow$ Answer potentially depends on the error measure.
+		\subitem  Here: difference in Frobenius norm $\|M\|_F^2 = \sum_{i,j}M_{ij}^2.$ 
+	\item First step: Calculate the variance of the approximate products.
+\end{itemize}
+
+\begin{lemma}[Variance of the approximate products] \label{lemma:var-appro-prod}
+Given matrices $A\in \R^{m \times n}, B\in \R{n\times p}$, define $S$ as in \eqref{matrix-mult-random}. Then
+\begin{equation}
+\operatorname{Var} S_{ij} = \frac{1}{c} \sum_{k=1}^n \frac{A_{ik}^2 B_{kj}^2}{\nu(k)} - \frac{1}{c} (AB)_{ij}^2.
+\end{equation}
+\begin{proof}
+Fix $i,j$ and set, for $t\in [c]$,
+\begin{equation*}
+X_t := \left(
+\frac{A^{(i_t)}B_{(i_t)}}{c\nu(i_t)}
+\right)_{ij} = \frac{A_{i i_t}B_{i_t j}}{c\nu(i_t)}.
+\end{equation*}
+Thus
+\begin{equation*}
+\E X_t^2 = \sum_{k=1}^n \nu(k) \left(
+\frac{A_{ik}B_{kj}}{c\nu(k)}
+\right)^2 = \frac{1}{c^2}\sum_{k=1}^n \frac{1}{\nu(k)}A^2_{ik}B^2_{kj},
+\end{equation*}
+and similarly
+\begin{equation*}
+\E X_t = \sum_{k=1}^n \nu(k) \frac{A_{ik}B_{kj}}{c \nu(k)}= \frac{1}{c} (AB)_{ij}.
+\end{equation*}
+Note that this is consistent with $\E S= AB$. Moreover,
+\begin{equation*}
+\begin{split}
+\E S_{ij}^2 = \E \left( \sum_{t=1}^c X_t \right)^2 & \overset{\text{indep.}}{=} \sum_{t=1}^c \E X_t^2 + \sum_{t_1,t_2, t_1 \neq t_2}^c \E X_{t_1} \E X_{t_2} \\
+& = \frac{1}{c}\sum_{k=1}^n \frac{1}{\nu(k)} A_{ik}^2 B_{kj}^2 + \underbrace{c(c-1)}_{\text{summands}} \left(\frac{1}{c}(AB)_{ij}\right)^2 \\
+& =  \frac{1}{c}\sum_{k=1}^n \frac{1}{\nu(k)} A_{ik}^2 B_{kj}^2 + \frac{c-1}{c} (AB)_{ij}^2.
+\end{split}
+\end{equation*}
+Consequently,
+\begin{equation*}
+\operatorname{Var}S_{ij} = \E S_{ij}^2 - \underbrace{(\E S_{ij})^2}_{(AB)_{ij}^2} =  \frac{1}{c}\sum_{k=1}^n \frac{1}{\nu(k)} A_{ik}^2 B_{kj}^2 - \frac{1}{c} (AB)_{ij}^2,
+\end{equation*}
+which proves the lemma.
+\end{proof}
+\end{lemma}
+\begin{lemma}[Expected error of approximate products] \label{lemma-expected-error-approx-prod}
+Given matrices $A\in\R^{m \times n}, B \in \R^{n\times p}$, define the approximate product $S$ as in \eqref{matrix-mult-random}, then
+\begin{equation} \label{eq:expected-error}
+\boxed{
+\E[\|AB-S\|_F^2]= \sum_{k=1}^n \frac{\|A^{(k)}\|_2^2 \|B_{(k)}\|_2^2}{c\nu(k)} - \frac{1}{c} \|AB\|_F^2}.
+\end{equation}
+\begin{proof}
+Note that
+\begin{equation*}
+\begin{split}
+\E[\|AB-S\|_F^2] & = \sum_{i=1}^m \sum_{j=1}^p \E [(AB-S)_{ij}^2] \\
+& = \sum_{i=1}^m \sum_{j=1}^p \underbrace{\E [(S-\E S)^2_{ij}}_{\operatorname{Var}S_{ij}}].
+\end{split}
+\end{equation*}
+Thus from Lemma \ref{lemma:var-appro-prod}, it follows that
+\begin{equation*}
+\begin{split}
+\E[\|AB-S\|_F^2] & =  \frac{1}{c}\sum_{k=1}^n \frac{1}{\nu(k)} \left( \sum_{i=1}^m A_{ik}^2 \right)
+\left( \sum_{j=1}^p B_{kj}^2  \right)- \frac{1}{c} \sum_{i,j}(AB)_{ij}^2 \\
+&= \sum_{k=1}^n \frac{\|A^{(k)}\|_2^2 \|B_{(k)}\|_2^2}{c\nu(k)} - \frac{1}{c} \|AB\|_F^2
+\end{split}
+\end{equation*}
+which completes the proof.
+\end{proof}
+\end{lemma}
+Best we can hope for: the error $\|AB-S\|_F^2$ is consistently close to expectation (``concentration phenomenon''). Thus we should choose the measure $\nu$ such that 
+\begin{equation*}
+ \sum_{k=1}^n \frac{\|A^{(k)}\|_2^2 \|B_{(k)}\|_2^2}{c\nu(k)}
+\end{equation*}
+is small. (Note that the second summand is independent of measure $v$.) \\
+Let $p$ denote the vector of mass distribution of $\nu$, i.e., $p_k=\nu(k)$. Then we are looking for the minimizer of the smooth function
+\begin{equation*}
+f(p) = \sum_{k=1}^n \frac{\|A^{(k)}\|_2^2 \|B_{(k)}\|_2^2}{p_k}
+\end{equation*}
+over
+$$
+P:=\bigg\{p \in [0,1]: \underbrace{\sum_{k=1}^n p_k}_{=: g(p)} =1\bigg\}.
+$$
+Lagrange multiplier formulation: Extremum must satisfy, for some $\lambda \in \R$
+\begin{equation*}
+\begin{split}
+0 & = \nabla f(p) + \lambda \nabla g(p) \\
+& = \left(
+- \frac{\|A^{(k)}\|_2^2 \|B_{(k)}\|_2^2}{p_k^2} 
+\right)_{k=1}^n + \lambda (\underbrace{1,...,1}_{n \text{ times}})
+\end{split}
+\end{equation*}
+This implies
+\begin{equation*}
+\lambda p_k^2 = \|A^{(k)}\|_2^2 \|B_{(k)}\|_2^2.
+\end{equation*}
+Thus,
+$$
+\sqrt{\lambda} \overset{\sum_{k}p_k=1}{=} \sum_{k=1}^n \sqrt{\lambda}p_k = \sum_{k=1}^n  \|A^{(k)}\|_2 \|B_{(k)}\|_2.
+$$
+If that sum vanishes, the product $AB$ vanishes. If not, we obtain the unique critical point
+\begin{equation} \label{eq:opt-prob}
+\boxed{
+p = \left( 
+\frac{\|A^{(j)}\|_2 \|B_{(j)}\|_2}{\sum_{k=1}^n \|A^{(k)}\|_2 \|B_{(k)}\|_2}
+\right)_{j=1}^n
+}.
+\end{equation}
+If $p_k \to 0$ for some $k$ with $\|A^{(k)}\|\neq 0 \neq \|B_{(k)}\|_2$, then $f(p) \to \infty$, so the critical point must be the minimizer. \\
+Choosing $\nu(j) = p_j$, we obtain
+\begin{equation} \label{eq:optimal-prob-error-est}
+\boxed{\E [\|AB-S\|_F^2] = \frac{1}{c} \left( \sum_{k=1}^n \|A^{(k)}\|_2 \|B_{(k)}\|_2\right)^2- \frac{1}{c} \|AB\|_F^2}.
+\end{equation}
+\begin{remark*}
+For rank 1 matrices, it holds that
+\begin{equation}\label{eq:ident-rank-1-matr}
+\boxed{\|A^{(k)}\|_2 \|B_{(k)}\|_2 = \|A^{(k)}B_{(k)}\| = \|A^{(k)}B_{(k)}\|_F}.
+\end{equation}
+The interpretation of optimal sampling strategy: we bias the random samples towards rank one components which are larger in norm.%\\
+%\drawaline 
+\end{remark*}
+In our \textbf{implementation}, we have two different objectives: \vspace{-0.5pc}
+\begin{itemize}[itemsep=0pt]
+	\item minimize number of mathematical operations
+	\item minimize storage space requirements
+\end{itemize}
+In addition to carrying out the reduced size multiplication [$O(m\cdot c \cdot p)$ operations], we need to compute \eqref{eq:opt-prob} (i.e., the probability measure $\nu$). We need
+\begin{itemize}
+	\item $O(m)$ operations to compute each $\|A^{(n)}\|_2$,
+	\item $O(p)$ operations to compute each $\|B_{(n)}\|_2$,
+\end{itemize}
+and in total $O(mn+np)$. \\\\
+\emph{Space requirement:} $O(n)$ to store all of them.\\\\
+How do we then \emph{sample}? We need a model for accessing data. \emph{Model}: Data streaming, i.e., data ``stream by'', one computes on the stream without storing. $\to$ ``pass efficiency''.\\\drawaline
+\mymarginpar{\tiny{3. Lecture}}
+\textbf{Goal:} Approximate $AB$ by
+\begin{equation*}
+\sum_{k=1}^c \frac{1}{c\nu(i_k)} A^{(i_k)} B_{(i_k)} =: S,
+\end{equation*}
+where $i_k$ are i.i.d. drawn from probability measure $\mu$.\vspace{0.5pc} \\
+\textbf{Optimal choice:}
+\begin{equation*}
+\nu(k) = \frac{\| A^{(k)}\|_2 \cdot \|B_{(k)}\|_2}{\sum_{j=1}^n \|A^{(j)}\|_2 \|B_{(j)}\|_2}.\vspace{0.5pc}
+\end{equation*}
+\textbf{Next:} Model for accessing data.
+\begin{definition}[Pass efficient model] In the pass efficient model, the only access an algorithm has to the data is via a pass, i.e., a sequential read of the entire data set. An algorithm is \emph{pass-efficient}, if it requires a small constant number of passes and additional space and time, which are \emph{sub-linear} in the length of the data stream. \vspace{-0.5pc}
+\begin{itemize}[-,itemsep=0pt]
+\item idealized model
+\item \emph{Motivation:} In many applications, one has the ability to store or generate larger amounts of data, but has random access to only linked amounts. 
+\end{itemize}
+$g$ is sublinear in $N \iff g(N) = o(N) \iff \forall C >0 \, \exists N_0 \in \N \, \forall N \geq N_0: g(N) \leq CN$. 
+\end{definition}
+\begin{remark*}
+As we ``do something'' whenever we read an entry, the number of operations is in fact linear, main requirement: sublinear access queries.
+\end{remark*}
+\begin{algorithm}[H]
+\SetAlgoLined
+\SetKwInOut{Input}{Input}\SetKwInOut{Output}{Output}
+% initialization\;
+ \Input{$\{a_1,...,a_n\}, a_i \geq 0, \sum_i a_i > 0$}
+ \Output{$i^*,a_{i^*}$}
+ \BlankLine
+$D= 0 \quad \leftarrow$ normalization factor \\
+\For {$i=1$ to $n$}{
+	$D = D+a_i$ \\
+	with probability $\frac{a_i}{D}$ let $i^*=i, a_{i^*} = a_i$ (or w.p. 1 if $a_i=D=0$)
+}
+\Return{$i^*, a_{i^*}$}
+\caption{Select algorithm}
+\end{algorithm}
+\begin{remark*}
+Indeed, this algorithm returns each $i$ with probability $\frac{a_i}{\sum_j a_j}$.
+\end{remark*}
+\begin{example*}
+Let $a_1=a_2=a_3 =5$. Then,
+\begin{itemize}[itemsep=0pt]
+	\item $i=1$: $D=5$ with $P=\frac{5}{5}=1$. Choose $i^* =1$.
+	\item $i=2$: $D=10$ with $P=\frac{5}{10}=\frac{1}{2}$. Then $P(i^*=1)=P(i^*=2)=\frac{1}{2}$. Choose $i^* = 2$.
+	\item $i=3$: $D=15$ with $P=\frac{5}{10}=\frac{1}{3}$. Then by independence, $P(i^*=1)=P(i^*=2)==P(i^*=3)=\frac{1}{3}$. Choose $i^* = 3$.
+\end{itemize} 
+\end{example*}
+\begin{lemma}
+Suppose that the selection algorithm is applied with inputs $\{a_1,...,a_n\}, a_i \geq 0$. Then the additional storage space required is $O(1)$ and the output $i^*$ satisfies $P(i^*=i) = \frac{a_i}{\sum_{j=1}^n a_j}$.
+\begin{proof}
+Note that only the current values of $i^*, a_{i^*},$ and $D$ must be retained, which corresponds to $O(1)$ space.\\
+The reminder of the proof is by induction. After reading $a_1$, one has $i^*=1$ w.p. $\frac{a_1}{a_1}=1$ (provided $a_1=0$, otherwise 1 by definition). As the induction hypothesis, assume that after reading $a_1,...,a_l$, the variable $i^*$ satisfies $$P(i^*=i) = \frac{a_i}{D_l}\quad \text{for } i \in [l],$$
+where $D_l = \sum_{i=1}^l a_i$. Upon reading $a_{l+1}$, the algorithm sets $i^*=l+1$ w.p. $\frac{a_{l+1}}{D_{l+1}}$ and retains its previous value w.p. $1-\frac{a_{l+1}}{D_{l+1}}  = \frac{D_l}{D_{l+1}}$. Thus by independence, after reading $a_1,...,a_{l+1}$, one has for $i< l+1$: $$P(i^*=i)=\frac{a_i}{D_l}\cdot \frac{D_l}{D_{l+1}}=\frac{a_i}{D_{l+1}}.$$ and for $i=l+1$, the same holds by construction. This completes the induction step and the results follows as $\frac{a_i}{D_n} = \frac{a_i}{\sum_{j=1}^n a_j}$.
+\end{proof}
+\end{lemma}
+To draw $c$ independent samples, the select algorithm is repeated $c$ times. Thus the total number of operations required to select $c$ indices independently at random is $O(c \cdot n)$, where $c$ is the number of passes and $n$ is the number of elements/operations per pass. $\leadsto$ Total number of operations $O(mn + np + cn +mcp)$.
+\paragraph{Observation:} The only cubic term in the above expression is $m c  p$. Thus, $c$ determines the number of operations. To determine the size of $c$, we, however, face the following conflicting goals: \vspace{-0.5pc}
+\begin{itemize}[-,itemsep=0pt]
+	\item Number of summands $c$ should be as small as possible.
+	\item Error ``in most cases'' should be as small as possible.
+	\item Probability of exceptional cases (``failure'') should be as small as possible.
+\end{itemize}
+Those goals can be reformulated as archiving 
+\begin{equation}
+\|AB-S\|_F \leq \varepsilon \|A\|_F \|B\|_F \quad \text{w.p. } \geq 1-\varepsilon
+\end{equation}
+for $\varepsilon$, $\delta$ and $c$ as small as possible.
+\begin{remark*}
+Assuming that $S=CR \in \R^{m\times p}$ is the output of Algorithm \ref{algo2:random-matr-mult}\ for the parameter $c$ with $$c\geq \frac{1}{\delta^2\varepsilon^2}$$ and optimal probability defined in \eqref{eq:opt-prob}, then it holds 
+\begin{equation} \label{eq:error-bound-epsilon-f}
+\|AB-S\|_F \leq \varepsilon \|A\|_F \|B\|_F\quad \text{w.p. } \geq 1 - \delta
+\end{equation}
+for arbitrary $\varepsilon,\delta>0$.
+\begin{small} 
+\begin{proof}(Exercise 3.2) First, Markov inequality implies
+$$
+P(\|AB-S\|_F \geq \varepsilon \|A\|_F \|B\|_F) \leq \frac{\E [\|AB-S\|_F]}{\varepsilon \|A\|_F\|B\|_F}.
+$$
+We now estimate the numerator $\E [\|AB-S\|_F]$
+\begin{equation*}
+\begin{split}
+\E[\|AB-S\|_F^2] & \underset{\text{opt. prob.}}{\overset{\eqref{eq:optimal-prob-error-est}}{=}} \frac{1}{c} \underbrace{\left( \sum_{k=1}^n \|A^{(k)}\|_2 \|B_{(k)}\|_2\right)^2}_{\overset{\text{C.S.}}{\leq}
+(\sum_{k=1}^n \|A^{(k)}\|_2^2)(\sum_{k=1}^n \|B_{(k)}\|_2^2)
+}- \frac{1}{c} \|AB\|_F^2 \\
+& \leq \frac{1}{c} \left(\sum_{k=1}^n \|A^{(k)}\|_2^2\right)\left(\sum_{k=1}^n \|B_{(k)}\|_2^2\right)  \\
+& = \frac{1}{c}\|A\|_F^2 \|B\|_F^2.
+\end{split}
+\end{equation*}
+Therefore,
+\begin{equation*}
+\begin{split}
+P(\|AB-S\|_F \geq \varepsilon \|A\|_F \|B\|_F) &\leq \frac{\E [\|AB-S\|_F]}{\varepsilon \|A\|_F\|B\|_F} \\
+&\leq \frac{1}{\sqrt{c}\varepsilon} \overset{c \geq \frac{1}{\delta^2\varepsilon^2}}{\leq} \delta,
+\end{split}
+\end{equation*}
+and  thus $P(\|AB-S\|_F \leq \varepsilon \|A\|_F \|B\|_F) \geq 1-\delta$.
+\end{proof}
+\end{small}
+\end{remark*}
+This result may suffice if 10\% failures are fine. But for very small probabilities of failure, we need very large number of measurements [see Exercise 3.2 (c)].
+But why can we hope for something better?%\vspace{-0.5pc}
+\begin{itemize}[itemsep=0pt]
+	\item $S$ is average of independent random matrices.
+	\item Law of large numbers suggests convergence to the mean, which is $AB$. 
+\end{itemize}
+However, we still face two issues:%\vspace{-0.5pc}
+\begin{enumerate}[itemsep=0pt]
+	\item We need non-asymptotic behavior rather than limit as $n\to\infty$ (as in LLN).
+	\item We need matrix version in Frobenius norm.
+\end{enumerate}
+\textbf{Idea:} Do not look at this as a matrix problem, rather consider the real-valued function
+\begin{equation} \label{eq2.9:functionf}
+\boxed{F:(i_1,...,i_c) \mapsto \underbrace{\left\|
+\sum_{t=1}^c \frac{1}{c\nu(i_t)}A^{(i_t)} B_{(i_t)} - \E \left[\sum_{t=1}^c \frac{1}{c\nu(i_t)}A^{(i_t)} B_{(i_t)}
+\right] \right\|_F}_{\|S-AB\|_F}}.
+\end{equation}
+
+\textbf{Observations:}%\vspace{-0.5pc}
+\begin{itemize}[-,itemsep=0pt]
+\item Inputs are i.i.d. random variables with values in $[n]$.
+\item $\E[F]$ is under control (via Lemma \ref{lemma-expected-error-approx-prod}).
+\end{itemize}
+\textbf{Tool:} Version of Mcdiarmid's inequality. \\
+\drawaline
+\mymarginpar{\tiny{4. Lecture}} \vspace{-1pc}
+\begin{theorem}[Mcdiarmid's inequality] \label{theorem:mcdiarmid}
+Let $S\subset \N$ and let $X_1,...,X_n$ be independent random variables with values in $S$. Let $F:S^n \to \R$ be a map fulfilling the following \emph{bounded differences property}: There exists $\Delta >0$ such that for all $x_1,...,x_n,x_1',...,x_n'$, it holds that
+\begin{equation} \label{eq2.10:bounded-diff-prop}
+|F(x_1,...,x_n) - F (x_1',...,x_n')| \leq \Delta \sum_{i=1}^n \mathbbm{1}_{\{x_i \neq x_i'\}}.
+\end{equation}
+Then for any $t>0$,
+\begin{equation}
+P(F(X_1,...,X_n) - \E [F(X_1,...,X_n] \geq t) \leq \exp \left(
+\frac{-2t^2}{n\Delta^2}.
+\right)
+\end{equation}
+\begin{proof}
+See Exercise 3.3.
+\end{proof}
+\end{theorem}
+With this tool, we can show the following bound with a much better scaling in $\delta$.
+\begin{theorem}
+Suppose $A\in \R^{m\times n}, B\in \R^{n\times p}, c\in [n]$, and $\nu$ is a probability measure on $[n]$ such that, for some constant $0<\beta\leq 1$
+\begin{equation}\label{eq:bound-for-measure-nu}
+\nu(k) \geq \frac{\beta \|A^{(k)}\|_2\|B_{(k)}\|_2}{\sum_{k'=1}^n \|A^{(k')}\|_2\|B_{(k')}\|_2 }.
+\end{equation}
+We construct $S$ using Algorithm \ref{algo2:random-matr-mult} above. Then for all $\delta \in (0,1)$ and the associated $\eta = 1+ \sqrt{\frac{2}{\beta} \log(\frac{1}{\delta})}$ it holds that 
+\begin{equation}
+\|AB-S\|_F \leq \frac{\eta}{\sqrt{\beta c}} \|A\|_F \|B\|_F \quad	\text{w.p. } \geq 1-\delta.
+\end{equation}
+The role of $\beta$ is to measure the amount of deviation from the optimal sampling density.
+\begin{proof}
+First note that 
+\begin{equation}
+\begin{split}
+\E \|AB - S\|_F & \overset{\text{Jensen}}{\leq} \sqrt{\E \|AB-S\|_F^2}  \\
+& \overset{\eqref{eq:expected-error}}{=} 
+\sqrt{\sum_{k=1}^n \frac{\|A^{(k)}\|_2^2 \|B_{(k)}\|_2^2}{c\nu(k)} - \frac{1}{c} \underbrace{\|AB\|_F^2}_{\geq 0}} \\
+& \overset{\eqref{eq:bound-for-measure-nu}}{\leq} \frac{1}{\sqrt{\beta c}} \underbrace{\sum_{k=1}^n \|A^{(k)}\|_2 \|B_{(k)}\|_2}_{= \langle (\|A^{(k)}\|_2)_{k=1}^n, (\|B_{(k)}\|_2)_{k=1}^n \rangle} \\
+& \overset{\text{C.S.}}{\leq} \frac{1}{\sqrt{\beta c}} 
+\underbrace{\left(
+ \sum_{k=1}^n \|A^{(k)}\|_2^2
+\right)^\frac{1}{2}}_{\|A\|_F}
+\underbrace{\left(
+ \sum_{k=1}^n \|B_{(k)}\|_2^2
+\right)^\frac{1}{2}}_{\|B\|_F} = \frac{1}{\sqrt{\beta c}} \|A\|_F\|B\|_F.
+\end{split}
+\end{equation}
+Thus it remains to show that
+\begin{equation*}
+\|AB-S\|_F - \E[\|AB-S\|_F] \leq \frac{\eta -1}{\sqrt{\beta c}} \|A\|_F \|B\|_F\quad \text{w.p. } \geq 1-\delta.
+\end{equation*}
+To prove this, we apply Theorem \ref{theorem:mcdiarmid} with \eqref{eq2.9:functionf}:
+$$F:(i_1,...,i_c) \mapsto \left\|
+\sum_{t=1}^c \frac{1}{c\nu(i_t)}A^{(i_t)} B_{(i_t)} - AB \right\|_F,$$
+and $\hat{n}=c$,\footnote{Here $\hat{n}$ refers to the $n$ from Theorem \ref{theorem:mcdiarmid}.} $S=[n].$ We first need to check the bounded difference property \eqref{eq2.10:bounded-diff-prop}. We fix $r \in [c]$. Then
+\begin{equation*}
+\begin{split}
+& |F(i_1,...,i_r,i_{r+1},...,i_c)-F(i_1,...,i_r',i_{r+1},...,i_c)|\\
+= &\left|
+\left\|
+\frac{1}{c}
+\sum_{t=1}^c \frac{1}{\nu(i_t)} A^{(i_t)} B_{(i_t)} - AB
+\right\|_F - 
+\left\|
+\frac{1}{c}
+\sum_{t=1, t\neq r}^c \frac{1}{\nu(i_t)} A^{(i_t)} B_{(i_t)} - AB +
+\frac{1}{c} \frac{1}{\nu(i'_r)}A^{(i_r')}B_{(i'_r)}
+\right\|_F
+\right| \\
+\overset{\text{rev. }\Delta\text{-ineq}}{\leq}
+&
+\left\|
+\frac{1}{c\nu(i_r)} A^{(i_r)} B_{(i_r)} - \frac{1}{c\nu(i'_r)} A^{(i'_r)} B_{(i'_r)}
+\right\|_F \\
+\underset{\eqref{eq:ident-rank-1-matr}}{\overset{\Delta\text{-ineq}}{\leq}} &
+\frac{1}{c\nu(i_r)} \|A^{(i_r)}\|_2 \|B_{(i_r)}\|_2 +  \frac{1}{c\nu(i'_r)} \|A^{(i'_r)}\|_2 \|B_{(i'_r)}\|_2 \\
+\leq \ \ & \frac{2}{c} \max_{\alpha \in [n]}\frac{\|A^{(\alpha)}\|_2\|B_{(\alpha)}\|_2}{\nu(\alpha)} \\
+\overset{\eqref{eq:bound-for-measure-nu}}{\leq} \, &
+\frac{2}{c\beta} \sum_{k'=1}^n \|A^{(k')}\|_2 \|B_{(k')}\|_2 \overset{\text{C.S.}}\leq \underbrace{\frac{2}{\beta c}\|A\|_F \|B\|_F}_{=: \Delta}.
+\end{split}
+\end{equation*}
+By the triangle inequality,this implies the bounded difference inequalities for arguments that differ in more than one entry and the same $\Delta$. The result follows from Theorem \ref{theorem:mcdiarmid} noting that $\exp(-\frac{\beta}{2}(\eta-1)^2)=\delta$.
+\end{proof}
+\end{theorem}
+\section{Randomized Principal Component Analysis}
+\textbf{Motivation.} Many high-dimensional data sets are intrinsically low-dimensional, i.e., they can be well approximated by a lower dimensional subspace. For a given matrix $A\in\R^{m \times n}$, we want to find a lower dimensional embedding $\tilde{A}_k$ of rank $k$ close to $A$ (cf. principal component analysis). 
+
+\begin{definition}[Best $k$-rank approximation]Given $A\in \R^{m \times n}, A_k \in \R^{m\times n}$ is a \emph{best rank-$k$ approximation to $A$} with respect to a norm $\vvvert \cdot \vvvert$ if $A_k\in \underset{B\in \R^{m \times n}, \operatorname{rk} B\leq k}{\operatorname{argmin}}\vvvert A-B\vvvert$.
+\end{definition} \vspace{-1pc}
+\begin{remark*} With respect to the spectral norm and the Frobenius norm, $A_k$ can be computed via the singular value decomposition. If the SVD of $A$ is 
+$$
+U\begin{pmatrix}
+\sigma_1 &    			&    & 0 \\
+	           &\sigma_2	&	  &	\\
+	           &				&	\ddots & \\
+	0           &				&	 & \sigma_r
+\end{pmatrix}V^*,
+$$
+then the matrix
+$$
+A_k = U\begin{pmatrix}
+\sigma_1 &    			&    & 0 \\
+	           &\ddots	&	  &	\\
+	           &				&	\sigma_k & \\
+	0           &				&	 & 0
+\end{pmatrix}V^*
+$$
+is the best rank-$k$ approximation to $A$.
+\end{remark*}
+However, to compute the full SVD of $A$, we have a complexity of $O(\min(m^2n,mn^2))$, i.e. is cubic. Note that to archive our goal (finding $\tilde{A}_k$ of rank $k$ such that $A-\tilde{A}_k$ and $A-A_k$ are comparable in size (up to constant)), a \emph{crucial step} is to find left singular vectors $u_1,...,u_k$, i.e. matrix $U_k$, corresponding to $\sigma_1,...,\sigma_k$. To reduce complexity, we could first \emph{project} $A$, then compute SVD of the smaller matrix, and infer approximation of $U_k$. For \emph{projection}, we will use \emph{randomized Hadamard transform}.
+
+\begin{definition}[Hadamard transform]\label{def:hadamard}
+Let $n\in\N$ be a power of 2. Then the $n\times n$ \emph{Hadamard matrix} $\tilde{H}_n$ is defined recursively as follows 
+\begin{equation}
+\tilde{H}_n = 
+\begin{pmatrix}
+\tilde{H}_{\frac{n}{2}} & \tilde{H}_{\frac{n}{2}} \\
+\tilde{H}_{\frac{n}{2}} & - \tilde{H}_{\frac{n}{2}}
+\end{pmatrix}
+\quad \text{with}\quad
+\tilde{H}_2 = 
+\begin{pmatrix}
++1 & +1 \\
++1 & -1
+\end{pmatrix}.
+\end{equation}
+The \emph{normalized Hadamard transform} is $H=H_n =\frac{1}{\sqrt{n}} \tilde{H}_n$. \\
+Furthermore, for a random diagonal matrix $D\in \R^{n\times n}$ with independent entries $D_{ii}$ with $P(D_{ii}=1)=P(D_{ii}=-1)=\frac{1}{2}$, $HD$ is called the \emph{randomized Hadamard transform}.
+\end{definition}
+
+\begin{remark*}
+The Hadamard transform has following properties:\vspace{-0.5pc}
+\begin{enumerate}[itemsep=0pt]
+\item The randomized Hadamard transform $HD$ is orthogonal, because the normalized Hadamard transform $H$ and the Rademacher matrix $D$ are orthogonal [Ex. 5.1].
+\item Computing $Hx$ (and hence $HDx$ for $x$ fixed needs $O(n\log n)$ operations (similar to fast Fourier transform, Hadamard $\hat{=}$ Fourier transform in $\mathbb{Z}_2$).
+\end{enumerate}
+\end{remark*}
+Intuition for Hadamard transform: $HD$ ``spreads out'' mass/energy. We hope that after applying $HD$, it suffices to subsample according to uniform distribution (hence independently of $A$). This is made precise by the following lemma:\\
+\drawaline
+\mymarginpar{\tiny{5. Lecture}} \vspace{-1pc}
+\begin{lemma}
+Let $U\in \R^{n \times d}$ be a matrix with orthogonal columns and let the product $HD$ be the $n\times n$ randomized Hadamard transform as introduced in Definition \ref{def:hadamard}. Then, it holds that
+\begin{equation*}
+\|(HDU)_{(i)}\|_2^2 \leq \frac{2d\log(40nd)}{n}\ \ \forall i=1,...,n		\quad \text{w.p. } \geq 1-\frac{1}{20}.
+\end{equation*}
+\begin{proof}
+Consider $(HDU)_{ij}$ for some $(i,j)\in [n]\times [d]$. As $D$ is diagonal, one has
+\begin{equation*}
+(HDU)_{ij} = \sum_{l=1}^n H_{il}D_{ll}U_{lj} = \sum_{l=1}^n D_{ll}(H_{il}U_{lj}).
+\end{equation*}
+As $D_{ll}$ are i.i.d. random signs, $|D_{ll}(H_{il}U_{lj})|\leq |(H_{il}U_{lj})|$ a.s., and $\E[D_{ll}(H_{il}U_{lj})] = 0$, Hoeffding's inequality implies for all $t>0$
+\begin{equation*}
+\begin{split}
+P\left( \left|
+\sum_{l=1}^n D_{ll}(H_{il}U_{lj})
+\right| \geq t \right)  
+\leq & \ 2 \exp \left( -
+\frac{t^2}{2\sum_{l=1}^n(H_{il}U_{lj})^2}
+\right)\\
+\overset{(*)}{=} & \  2 \exp \left( 
+- \frac{nt^2}{2}
+\right),
+\end{split}
+\end{equation*}
+where $(*)$ comes from the fact
+\begin{equation*}
+\sum_{l=1}^n (H_{il}U_{lj})^2 \overset{|H_{il}|=\frac{1}{\sqrt{n}}}{=} \frac{1}{n}\sum_{l=1}^n U_{lj}^2 = \frac{1}{n}\|U^{(j)}\|_2^2 \overset{U \text{ orth.}}{=} \frac{1}{n}.
+\end{equation*}
+Consider 
+\begin{equation*}
+\delta = 2 \exp \left( 
+- \frac{nt^2}{2}
+\right)
+\end{equation*}
+and thus choose $t:= \sqrt{\frac{2\log\left(\frac{2}{\delta}\right)}{n}}$,
+we get
+\begin{equation}\label{eq:help}
+P\left( \left|
+\sum_{l=1}^n D_{ll}(H_{il}U_{lj})
+\right| \geq \sqrt{\frac{2\log\left(\frac{2}{\delta}\right)}{n}} \right)  
+\leq \delta.
+\end{equation}
+Therefore,
+\begin{equation*}
+\begin{split}
+& P\left(
+\exists i \in [n]: \|(HDU)_{(i)}\|_2^2 \geq \frac{2d\log(40nd)}{n}
+\right) \\
+\overset{(*)}{\leq} \ & P \left(
+\exists (i,j): \left|
+(HDU)_{ij}%\sum_{l=1}^n D_{ll}(H_{il}U_{lj})
+\right| \geq \sqrt{\frac{2\log(40nd)}{n}}
+\right) \\
+\overset{\text{Subadd.}}{\leq} \ &
+\sum_{i=1}^n \sum_{j=1}^d P\left( |(HDU)_{(ij)}| \geq \sqrt{\frac{2\log(40nd)}{n}}
+\right) \\
+\underset{\frac{2}{\delta}=40nd}{\overset{\eqref{eq:help}}{\leq}} \ &\frac{1}{20nd} \leq \frac{1}{20},
+\end{split}
+\end{equation*}
+where $(*)$ comes from the fact 
+\begin{equation*}
+\left(
+\forall (i,j): \left|
+(HDU)_{ij}%\sum_{l=1}^n D_{ll}(H_{il}U_{lj})
+\right| \leq \sqrt{\frac{2\log(40nd)}{n}}
+\right)  \implies \left(
+\forall i \in [n]: \|(HDU)_{(i)}\|_2^2 \leq \frac{2d\log(40nd)}{n}
+\right).
+\end{equation*}
+Considering the complement yields claim.
+\end{proof}
+\begin{remark*}
+The result holds even for arbitrary $U\in \R^{n\times D}$ (not necessarily orthogonal), see Exercise 5.2.
+\end{remark*}
+\end{lemma}
+\end{document}
