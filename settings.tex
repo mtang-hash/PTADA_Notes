@@ -119,7 +119,7 @@
 \theoremstyle{definition}
 \newtheorem{definition}{Definition}
 \newtheorem{problem}[definition]{Problem}
-\theoremstyle{theorem}
+%\theoremstyle{theorem}
 \newtheorem{theorem}[definition]{Theorem}
 \newtheorem*{theorem*}{Theorem}
 \newtheorem{prop}[definition]{Proposition}
@@ -134,10 +134,16 @@
 \AfterEndEnvironment{definition}{\noindent\ignorespaces}
 \AfterEndEnvironment{example}{\noindent\ignorespaces}
 \AfterEndEnvironment{theorem}{\noindent\ignorespaces}
+
+\AfterEndEnvironment{prop}{\noindent\ignorespaces}
 % \AfterEndEnvironment{satz}{\noindent\ignorespaces}
 % \AfterEndEnvironment{korollar}{\noindent\ignorespaces}
 \AfterEndEnvironment{remark}{\noindent\ignorespaces}
+\AfterEndEnvironment{paragraph}{\noindent\ignorespaces}
+
 \AfterEndEnvironment{remark*}{\noindent\ignorespaces}
+\AfterEndEnvironment{example*}{\noindent\ignorespaces}
+
 % \AfterEndEnvironment{remark'}{\noindent\ignorespaces}
 % \AfterEndEnvironment{proposition}{\noindent\ignorespaces}
 % \AfterEndEnvironment{proof}{\noindent\ignorespaces}
@@ -176,6 +182,7 @@
 % Operator names
 \newcommand{\id}{\operatorname{id}}
 \newcommand{\Hom}{\operatorname{Hom}}
+\newcommand{\tr}{\operatorname{tr}}
 \newcommand{\del}{\partial}
 \newcommand{\GL}{\operatorname{GL}}
 \newcommand{\vol}{\operatorname{vol}}
@@ -192,6 +199,7 @@
 \newcommand{\comment}[1]{}
 \newcommand{\drawaline}{\rule{\textwidth}{0.2pt}}
 %\renewcommand{\def}{\definition}
+%\renewcommand{\var}{\operatorname{var}}
 \renewcommand{\ker}{\operatorname{ker}}
 \renewcommand*{\forall}{\foralltemp\mkern2mu}
 \renewcommand{\emptyset}{\varnothing}

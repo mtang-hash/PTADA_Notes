@@ -1,15 +1,15 @@
 \input{settings.tex}
-\title{\scshape Notes from Class \vspace{0.5pc} \\ \large{Probabilistic Techniques and Algorithms in Data Analysis}}
+\title{ Notes from Class \vspace{0.5pc} \\ \large{Probabilistic Techniques and Algorithms in Data Analysis}}
 \author{Min Tang}
 %\date{27. Oktober 2019}
 \begin{document}
 %\maketitle
 %\tableofcontents 
-%\newpage
+\newpage
 \setcounter{section}{1}
 \setcounter{page}{2}
 \section{Randomized Matrix Multiplication}
-\mymarginpar{\tiny{1. Lecture}}
+\mymarginpar{\tiny{1. Lecture\\ 18.10.2022}}
 \paragraph{Motivations:}
 \begin{itemize}
 \item Basis transformation
@@ -60,7 +60,7 @@ For $m=n=p$: best known order is $O(m^{2.37...})$
 The Frobenius norm will be used as a measure for error.
 \end{itemize}
 \drawaline
-\mymarginpar{\tiny{2. Lecture}}
+\mymarginpar{\tiny{2. Lecture\\ 25.10.2022}}
 \textbf{Observation}:
 \begin{equation*}
 AB=\sum_{i} \underbrace{A^{(i)}}_{i\text{-th column of }A} \cdot \underbrace{B_{(i)}}_{i\text{-th row of }B}
@@ -106,10 +106,12 @@ AB=\sum_{i} \underbrace{A^{(i)}}_{i\text{-th column of }A} \cdot \underbrace{B_{
 \end{itemize}
 
 \begin{lemma}[Variance of the approximate products] \label{lemma:var-appro-prod}
-Given matrices $A\in \R^{m \times n}, B\in \R{n\times p}$, define $S$ as in \eqref{matrix-mult-random}. Then
+\begin{mdframed}
+Given matrices $A\in \R^{m \times n}$, $B\in \R^{n\times p}$, define $S$ as in \eqref{matrix-mult-random}. Then
 \begin{equation}
 \operatorname{Var} S_{ij} = \frac{1}{c} \sum_{k=1}^n \frac{A_{ik}^2 B_{kj}^2}{\nu(k)} - \frac{1}{c} (AB)_{ij}^2.
 \end{equation}
+\end{mdframed}
 \begin{proof}
 Fix $i,j$ and set, for $t\in [c]$,
 \begin{equation*}
@@ -143,11 +145,13 @@ which proves the lemma.
 \end{proof}
 \end{lemma}
 \begin{lemma}[Expected error of approximate products] \label{lemma-expected-error-approx-prod}
-Given matrices $A\in\R^{m \times n}, B \in \R^{n\times p}$, define the approximate product $S$ as in \eqref{matrix-mult-random}, then
+\begin{mdframed}
+Given matrices $A\in\R^{m \times n}$, $B \in \R^{n\times p}$, define the approximate product $S$ as in \eqref{matrix-mult-random}, then
 \begin{equation} \label{eq:expected-error}
-\boxed{
+{
 \E[\|AB-S\|_F^2]= \sum_{k=1}^n \frac{\|A^{(k)}\|_2^2 \|B_{(k)}\|_2^2}{c\nu(k)} - \frac{1}{c} \|AB\|_F^2}.
 \end{equation}
+\end{mdframed}
 \begin{proof}
 Note that
 \begin{equation*}
@@ -231,7 +235,7 @@ In addition to carrying out the reduced size multiplication [$O(m\cdot c \cdot p
 and in total $O(mn+np)$. \\\\
 \emph{Space requirement:} $O(n)$ to store all of them.\\\\
 How do we then \emph{sample}? We need a model for accessing data. \emph{Model}: Data streaming, i.e., data ``stream by'', one computes on the stream without storing. $\to$ ``pass efficiency''.\\\drawaline
-\mymarginpar{\tiny{3. Lecture}}
+\mymarginpar{\tiny{3. Lecture\\ 08.11.2022}}
 \textbf{Goal:} Approximate $AB$ by
 \begin{equation*}
 \sum_{k=1}^c \frac{1}{c\nu(i_k)} A^{(i_k)} B_{(i_k)} =: S,
@@ -242,7 +246,10 @@ where $i_k$ are i.i.d. drawn from probability measure $\mu$.\vspace{0.5pc} \\
 \nu(k) = \frac{\| A^{(k)}\|_2 \cdot \|B_{(k)}\|_2}{\sum_{j=1}^n \|A^{(j)}\|_2 \|B_{(j)}\|_2}.\vspace{0.5pc}
 \end{equation*}
 \textbf{Next:} Model for accessing data.
-\begin{definition}[Pass efficient model] In the pass efficient model, the only access an algorithm has to the data is via a pass, i.e., a sequential read of the entire data set. An algorithm is \emph{pass-efficient}, if it requires a small constant number of passes and additional space and time, which are \emph{sub-linear} in the length of the data stream. \vspace{-0.5pc}
+\begin{definition}[Pass efficient model]
+\begin{mdframed}
+In the pass efficient model, the only access an algorithm has to the data is via a pass, i.e., a sequential read of the entire data set. An algorithm is \emph{pass-efficient}, if it requires a small constant number of passes and additional space and time, which are \emph{sub-linear} in the length of the data stream.
+\end{mdframed} \vspace{-1pc}
 \begin{itemize}[-,itemsep=0pt]
 \item idealized model
 \item \emph{Motivation:} In many applications, one has the ability to store or generate larger amounts of data, but has random access to only linked amounts. 
@@ -279,7 +286,9 @@ Let $a_1=a_2=a_3 =5$. Then,
 \end{itemize} 
 \end{example*}
 \begin{lemma}
-Suppose that the selection algorithm is applied with inputs $\{a_1,...,a_n\}, a_i \geq 0$. Then the additional storage space required is $O(1)$ and the output $i^*$ satisfies $P(i^*=i) = \frac{a_i}{\sum_{j=1}^n a_j}$.
+\begin{mdframed}
+Suppose that the selection algorithm is applied with inputs $\{a_1,...,a_n\}$, $a_i \geq 0$. Then the additional storage space required is $O(1)$ and the output $i^*$ satisfies $P(i^*=i) = \frac{a_i}{\sum_{j=1}^n a_j}$.
+\end{mdframed}
 \begin{proof}
 Note that only the current values of $i^*, a_{i^*},$ and $D$ must be retained, which corresponds to $O(1)$ space.\\
 The reminder of the proof is by induction. After reading $a_1$, one has $i^*=1$ w.p. $\frac{a_1}{a_1}=1$ (provided $a_1=0$, otherwise 1 by definition). As the induction hypothesis, assume that after reading $a_1,...,a_l$, the variable $i^*$ satisfies $$P(i^*=i) = \frac{a_i}{D_l}\quad \text{for } i \in [l],$$
@@ -295,7 +304,7 @@ To draw $c$ independent samples, the select algorithm is repeated $c$ times. Thu
 \end{itemize}
 Those goals can be reformulated as archiving 
 \begin{equation}
-\|AB-S\|_F \leq \varepsilon \|A\|_F \|B\|_F \quad \text{w.p. } \geq 1-\varepsilon
+\|AB-S\|_F \leq \varepsilon \|A\|_F \|B\|_F \quad \text{w.p. } \geq 1-\delta
 \end{equation}
 for $\varepsilon$, $\delta$ and $c$ as small as possible.
 \begin{remark*}
@@ -335,7 +344,7 @@ But why can we hope for something better?%\vspace{-0.5pc}
 \begin{itemize}[itemsep=0pt]
 	\item $S$ is average of independent random matrices.
 	\item Law of large numbers suggests convergence to the mean, which is $AB$. 
-\end{itemize}
+\end{itemize} \newpage
 However, we still face two issues:%\vspace{-0.5pc}
 \begin{enumerate}[itemsep=0pt]
 	\item We need non-asymptotic behavior rather than limit as $n\to\infty$ (as in LLN).
@@ -353,26 +362,28 @@ However, we still face two issues:%\vspace{-0.5pc}
 \item Inputs are i.i.d. random variables with values in $[n]$.
 \item $\E[F]$ is under control (via Lemma \ref{lemma-expected-error-approx-prod}).
 \end{itemize}
-\textbf{Tool:} Version of Mcdiarmid's inequality. \\
-\drawaline
-\mymarginpar{\tiny{4. Lecture}} \vspace{-1pc}
+\textbf{Tool:} Version of Mcdiarmid's inequality. 
+\mymarginpar{\tiny{4. Lecture \\ 22.11.2022}} %\vspace{-1pc}
 \begin{theorem}[Mcdiarmid's inequality] \label{theorem:mcdiarmid}
-Let $S\subset \N$ and let $X_1,...,X_n$ be independent random variables with values in $S$. Let $F:S^n \to \R$ be a map fulfilling the following \emph{bounded differences property}: There exists $\Delta >0$ such that for all $x_1,...,x_n,x_1',...,x_n'$, it holds that
+\begin{mdframed}
+Let $S\subset \N$ and let $X_1,...,X_n$ be independent random variables with values in $S$. Let $F:S^n \to \R$ be a map fulfilling the following \emph{bounded differences property}: There exists $\Delta >0$ such that for all $x_1,...,x_n,x_1',...,x_n'$, it holds that \vspace{-0.5pc}
 \begin{equation} \label{eq2.10:bounded-diff-prop}
-|F(x_1,...,x_n) - F (x_1',...,x_n')| \leq \Delta \sum_{i=1}^n \mathbbm{1}_{\{x_i \neq x_i'\}}.
+|F(x_1,...,x_n) - F (x_1',...,x_n')| \leq \Delta \sum_{i=1}^n \mathbbm{1}_{\{x_i \neq x_i'\}}.\vspace{-0.5pc}
 \end{equation}
-Then for any $t>0$,
+Then for any $t>0$, \vspace{-0.5pc}
 \begin{equation}
 P(F(X_1,...,X_n) - \E [F(X_1,...,X_n] \geq t) \leq \exp \left(
 \frac{-2t^2}{n\Delta^2}.
 \right)
 \end{equation}
+\end{mdframed}
 \begin{proof}
 See Exercise 3.3.
 \end{proof}
 \end{theorem}
 With this tool, we can show the following bound with a much better scaling in $\delta$.
 \begin{theorem}
+\begin{mdframed}
 Suppose $A\in \R^{m\times n}, B\in \R^{n\times p}, c\in [n]$, and $\nu$ is a probability measure on $[n]$ such that, for some constant $0<\beta\leq 1$
 \begin{equation}\label{eq:bound-for-measure-nu}
 \nu(k) \geq \frac{\beta \|A^{(k)}\|_2\|B_{(k)}\|_2}{\sum_{k'=1}^n \|A^{(k')}\|_2\|B_{(k')}\|_2 }.
@@ -382,6 +393,7 @@ We construct $S$ using Algorithm \ref{algo2:random-matr-mult} above. Then for al
 \|AB-S\|_F \leq \frac{\eta}{\sqrt{\beta c}} \|A\|_F \|B\|_F \quad	\text{w.p. } \geq 1-\delta.
 \end{equation}
 The role of $\beta$ is to measure the amount of deviation from the optimal sampling density.
+\end{mdframed}
 \begin{proof}
 First note that 
 \begin{equation}
@@ -439,7 +451,10 @@ By the triangle inequality,this implies the bounded difference inequalities for 
 \section{Randomized Principal Component Analysis}
 \textbf{Motivation.} Many high-dimensional data sets are intrinsically low-dimensional, i.e., they can be well approximated by a lower dimensional subspace. For a given matrix $A\in\R^{m \times n}$, we want to find a lower dimensional embedding $\tilde{A}_k$ of rank $k$ close to $A$ (cf. principal component analysis). 
 
-\begin{definition}[Best $k$-rank approximation]Given $A\in \R^{m \times n}, A_k \in \R^{m\times n}$ is a \emph{best rank-$k$ approximation to $A$} with respect to a norm $\vvvert \cdot \vvvert$ if $A_k\in \underset{B\in \R^{m \times n}, \operatorname{rk} B\leq k}{\operatorname{argmin}}\vvvert A-B\vvvert$.
+\begin{definition}[Best $k$-rank approximation]
+\begin{mdframed}
+Given $A\in \R^{m \times n}, A_k \in \R^{m\times n}$ is a \emph{best rank-$k$ approximation to $A$} with respect to a norm $\vvvert \cdot \vvvert$ if $A_k\in \underset{B\in \R^{m \times n}, \operatorname{rk} B\leq k}{\operatorname{argmin}}\vvvert A-B\vvvert$.
+\end{mdframed}
 \end{definition} \vspace{-1pc}
 \begin{remark*} With respect to the spectral norm and the Frobenius norm, $A_k$ can be computed via the singular value decomposition. If the SVD of $A$ is 
 $$
@@ -464,22 +479,24 @@ is the best rank-$k$ approximation to $A$.
 However, to compute the full SVD of $A$, we have a complexity of $O(\min(m^2n,mn^2))$, i.e. is cubic. Note that to archive our goal (finding $\tilde{A}_k$ of rank $k$ such that $A-\tilde{A}_k$ and $A-A_k$ are comparable in size (up to constant)), a \emph{crucial step} is to find left singular vectors $u_1,...,u_k$, i.e. matrix $U_k$, corresponding to $\sigma_1,...,\sigma_k$. To reduce complexity, we could first \emph{project} $A$, then compute SVD of the smaller matrix, and infer approximation of $U_k$. For \emph{projection}, we will use \emph{randomized Hadamard transform}.
 
 \begin{definition}[Hadamard transform]\label{def:hadamard}
-Let $n\in\N$ be a power of 2. Then the $n\times n$ \emph{Hadamard matrix} $\tilde{H}_n$ is defined recursively as follows 
+\begin{mdframed}
+Let $n\in\N$ be a power of 2. Then the $n\times n$ \textbf{Hadamard matrix} $\widetilde{H}_n$ is defined recursively as follows 
 \begin{equation}
-\tilde{H}_n = 
+\widetilde{H}_n = 
 \begin{pmatrix}
-\tilde{H}_{\frac{n}{2}} & \tilde{H}_{\frac{n}{2}} \\
-\tilde{H}_{\frac{n}{2}} & - \tilde{H}_{\frac{n}{2}}
+\widetilde{H}_{\frac{n}{2}} & \widetilde{H}_{\frac{n}{2}} \\
+\widetilde{H}_{\frac{n}{2}} & - \widetilde{H}_{\frac{n}{2}}
 \end{pmatrix}
 \quad \text{with}\quad
-\tilde{H}_2 = 
+\widetilde{H}_2 = 
 \begin{pmatrix}
 +1 & +1 \\
 +1 & -1
 \end{pmatrix}.
 \end{equation}
-The \emph{normalized Hadamard transform} is $H=H_n =\frac{1}{\sqrt{n}} \tilde{H}_n$. \\
-Furthermore, for a random diagonal matrix $D\in \R^{n\times n}$ with independent entries $D_{ii}$ with $P(D_{ii}=1)=P(D_{ii}=-1)=\frac{1}{2}$, $HD$ is called the \emph{randomized Hadamard transform}.
+The \textbf{normalized Hadamard transform} is \vspace{-0.6pc} $$H=H_n =\frac{1}{\sqrt{n}} \widetilde{H}_n.\vspace{-0.6pc} $$
+Furthermore, for a random diagonal matrix $D\in \R^{n\times n}$ with independent entries $D_{ii}$ with $P(D_{ii}=1)=P(D_{ii}=-1)=\frac{1}{2}$, $HD$ is called the \textbf{randomized Hadamard transform}.
+\end{mdframed}
 \end{definition}
 
 \begin{remark*}
@@ -489,14 +506,16 @@ The Hadamard transform has following properties:\vspace{-0.5pc}
 \item Computing $Hx$ (and hence $HDx$ for $x$ fixed needs $O(n\log n)$ operations (similar to fast Fourier transform, Hadamard $\hat{=}$ Fourier transform in $\mathbb{Z}_2$).
 \end{enumerate}
 \end{remark*}
-Intuition for Hadamard transform: $HD$ ``spreads out'' mass/energy. We hope that after applying $HD$, it suffices to subsample according to uniform distribution (hence independently of $A$). This is made precise by the following lemma:\\
-\drawaline
-\mymarginpar{\tiny{5. Lecture}} \vspace{-1pc}
+Intuition for Hadamard transform: $HD$ ``spreads out'' mass/energy. We hope that after applying $HD$, it suffices to subsample according to uniform distribution (hence independent of $A$). This is made precise by the following lemma:
+%\drawaline
+\mymarginpar{\tiny{5. Lecture \\ 29.11.2022}} %\vspace{-1pc}
 \begin{lemma}
+\begin{mdframed}
 Let $U\in \R^{n \times d}$ be a matrix with orthogonal columns and let the product $HD$ be the $n\times n$ randomized Hadamard transform as introduced in Definition \ref{def:hadamard}. Then, it holds that
 \begin{equation*}
 \|(HDU)_{(i)}\|_2^2 \leq \frac{2d\log(40nd)}{n}\ \ \forall i=1,...,n		\quad \text{w.p. } \geq 1-\frac{1}{20}.
 \end{equation*}
+\end{mdframed}
 \begin{proof}
 Consider $(HDU)_{ij}$ for some $(i,j)\in [n]\times [d]$. As $D$ is diagonal, one has
 \begin{equation*}
@@ -526,15 +545,18 @@ Consider
 - \frac{nt^2}{2}
 \right)
 \end{equation*}
-and thus choose $t:= \sqrt{\frac{2\log\left(\frac{2}{\delta}\right)}{n}}$,
+and choose $t:= \sqrt{\frac{2\log\left(\frac{2}{\delta}\right)}{n}}$,
 we get
 \begin{equation}\label{eq:help}
+P\left( \left|
+(HDU)_{ij}
+\right| \geq \sqrt{\frac{2\log\left(\frac{2}{\delta}\right)}{n}} \right)  =
 P\left( \left|
 \sum_{l=1}^n D_{ll}(H_{il}U_{lj})
 \right| \geq \sqrt{\frac{2\log\left(\frac{2}{\delta}\right)}{n}} \right)  
 \leq \delta.
 \end{equation}
-Therefore,
+Choosing $\delta = \frac{1}{20nd}$, we obtain
 \begin{equation*}
 \begin{split}
 & P\left(
@@ -567,4 +589,78 @@ Considering the complement yields claim.
 The result holds even for arbitrary $U\in \R^{n\times D}$ (not necessarily orthogonal), see Exercise 5.2.
 \end{remark*}
 \end{lemma}
+\underline{Idea:} Apply randomized Hadamard transformation from one side, e.g., postmultiplying $A\in\R^{m\times n}$ by $(HD)^T$, forming $ADH\in \R^{m \times n}$. Then sample (uniformly at random) $c$ columns from $ADH$, thus forming a smaller matrix $C\in\R^{m\times c}$. From $C$, construct approximations of the top $k$ singular values of $A$.\\
+
+\begin{algorithm}
+\SetAlgoLined
+\SetKwInOut{Input}{Input}\SetKwInOut{Output}{Output}
+% initialization\;
+ \Input{$A\in\R^{m\times n}$, rank parameter $k \ll \min\{m,n\}$, error parameter $\varepsilon \in \left( 0, \frac{1}{2}\right)$, name of samples $c\in \N$.}
+ \Output{$\widetilde{U}_k \in \R^{m\times k}$}
+ \BlankLine
+ set $S = 0^{n \times c}$ (all entries are $0$) \textit{//sample matrix}\\
+ \For {$t=1$ to $c$}{ 
+	\emph{// i.i.d. trials with replacement} \\
+	select uniformly at random $i_t \in [n]$ and set $S^{(t)} = \sqrt{\frac{n}{c}} e_{i_t}$
+}
+compute $C=ADHS$ where $HD$ is the randomized Hadamard transform\\
+compute $U_C$, an ONB for the column space of $C$ (e.g., via SVD)\\
+compute $W=U_C^TA$ and compute its top $k$ singular vectors $U_{W,k}$ (or less if $\operatorname{rank} W <k$) \\
+\Return{$\widetilde{U}_k = U_CU_{W,k} \in \R^{m \times k}$}
+\caption{Randomized PCA} \label{algo:random-pca}
+\end{algorithm}
+\newpage
+\begin{theorem}
+\begin{mdframed}
+Let $A\in\R^{m\times n}$, let $k$ be a rank parameter, and let $\varepsilon\in (0,\frac{1}{2})$. If we set $$ c \geq c_0 \frac{k\log n}{\varepsilon^2} \left(
+\log\frac{k}{\varepsilon^2} + \log \log n
+\right)$$
+for a fixed constant $c_0$, then with probability $\geq 0.85$, Algorithm \ref{algo:random-pca} returns a matrix $\widetilde{U}_k \in \R^{m\times k}$ such that
+\begin{equation*}
+\|A-\widetilde{U}_k\widetilde{U}_k^TA\|_F \leq (1+\varepsilon) \|A-A_k\|_F.
+\end{equation*}
+The running time of the algorithm is $O(mnc)$. (Recall: $A_k$ denotes the best $k$-rank approximation of $A$.)
+\end{mdframed}
+\begin{remark}
+Repeating Algorithm \ref{algo:random-pca} $\lceil \log \frac{1}{\delta}/ \log C(\delta) \rceil$-times and keeping the matrix $\widetilde{U}_k$ that minimizes $\|A-\widetilde{U}_k\widetilde{U}_k^TA\|_F$ reduces the failure probability to at most $\delta$ for $\delta \in (0,1)$.
+\end{remark}
+\textbf{Proof strategy of Theorem 3.4.} We split $A = A_k + A_{k,\perp}$ for $A_k$ the best rank-$k$ approximation. We first show 
+\begin{equation}
+\|A-\widetilde{U}_k \widetilde{U}_k^T A \|_F^2 \leq \|A_k - U_CU_C^TA_k\|_F^2 + \|A_{k,\perp}\|_F^2
+\end{equation}
+So in the reminder, we ``only'' need to control the first term on the right hand side. (The second yields $\|A-A_k\|_F$ on the right hand side of the statement we aim to prove. In order to show this inequality, we need the following lemma.
+\begin{lemma}
+Let $U_C$ and $\widetilde{U}_k$ be as in Algorithm \ref{algo:random-pca}, i.e. the columns of $U_C$ are an ONB of $\operatorname{range}(C)$.  Then
+\begin{equation}
+A-\widetilde{U}_k\widetilde{U}_k^T A = A-U_C(U_C^TA)_k
+\end{equation}
+In addition, $U_C(U_C^TA)_k$ is the best rank-$k$ approximation of $A$ with respect to $\|\cdot\|_F$ that lies within $\operatorname{range}(C)$, i.e.,
+\begin{equation} \label{lem:3.6-2}
+\|A-U_C(U_C^TA)_k\|_F^2 = \min_{\operatorname{rank}(Y)\leq k} \|A-U_CY\|_F^2
+\end{equation}
+\begin{proof}
+Recall that $\widetilde{U}_k = U_C U_{W,k}$, where $U_{W,k}$ is the matrix of the top $k$ left singular vectors of $W = U_C^TA$. In other words, if $W=U_W\Sigma_WV_W^T$ denotes the SVD of $W$, the best $k$-term approximation $W_k$ of $W$ with respect to $\|\cdot \|_F$ has a singular value decomposition
+\begin{equation}
+W_k = U_{W,k} \Sigma_{W,k} V_{W},
+\end{equation}
+where $\Sigma_{W,k}$ consists of the first $k$ rows of $\Sigma_W$. Consequently,
+\begin{equation}
+\begin{split}
+A-\widetilde{U}_k\widetilde{U}_k^TA = & A-U_CU_{W,k}U_{W,k}^TU_C^TA \\
+= & A- U_C U_{W,k} \underbrace{\underbrace{U_{W,k}^T U_W}_{(\id_k \mathbf{0})}\Sigma_W}_{
+\Sigma_{W,k}
+}V_W \\
+= & A-U_CW_k \\
+= & A-U_C (U_C^TA)_k.
+\end{split}
+\end{equation}
+To prove \eqref{lem:3.6-2}, we will use a homework result showing that 
+\begin{equation}
+\|A-U_CY\|_F^2 = \|(I-U_CU_C^T)A\|_F^2 + \|U_C^TA-Y\|_F^2	\quad \forall Y\text{ with }\operatorname{rk}(Y)\leq k.
+\end{equation}
+Now the minimum on the right hand side (and hence also on the left hand side) under the constraint $\operatorname{rank} \leq k$ is archived at $y=(U_C^TA)_k$, which shows \eqref{lem:3.6-2}.
+\end{proof}
+\end{lemma}
+\mymarginpar{\tiny{6. Lecture \\ 06.12.2022}} 
+\end{theorem}
 \end{document}
